@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const GITHUB_REPO = 'my-products';
 
     // 1. ⚠️ ACTION REQUIRED: Get this URL from the Google Apps Script setup (see README_GoogleSheet.md)
-    const GOOGLE_SHEET_API_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxKuNsxy-sYMSlUteEFkKQXAUyRFMeHT42pQ9eoinZqwhLNdWgR_rR6jLaqmyhp4YvZ/exec';
 
     // 2. ⚠️ ACTION REQUIRED: Enter your Mami's WhatsApp number with the country code (no + or spaces)
     const WHATSAPP_PHONE_NUMBER = '910000000000'; // Example for India
