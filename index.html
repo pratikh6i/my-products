@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Mami's Collection</title>
+    <title>Spark Choice</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -17,11 +17,13 @@
                 <path d="M64 4C31.52 4 4 31.52 4 64C4 89.2 18.24 110.88 39.4 119.44C42.84 120.84 45.44 118.44 44.44 115.2C40.6 102.6 38 88.36 38 73.16C38 49 52.6 30.2 74.2 26.8C94.2 23.6 112 38.48 112 59.8C112 85.08 96.2 108.48 74.4 115.2C71.2 116.24 73.6 118.84 75 115.4C90.2 92.4 96 79 90.4 51.6C85.6 28.2 64 20 64 20" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M64 124C79.464 124 92 111.464 92 96C92 80.536 79.464 68 64 68C48.536 68 36 80.536 36 96C36 111.464 48.536 124 64 124Z" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="brand-title">Mami's Collection</span>
+            <span class="brand-title">Spark Choice</span>
         </div>
-        <div class="search-wrapper">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search..." aria-label="Search products">
-            <button id="searchIcon" class="search-button" aria-label="Toggle search">
+        <div class="header-actions">
+             <button id="favoritesButton" class="header-button" aria-label="Show favorites">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </button>
+            <button id="searchIcon" class="header-button" aria-label="Toggle search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </button>
         </div>
@@ -33,17 +35,28 @@
             <p>Loading the Collection...</p>
         </div>
         <!-- Product cards will be inserted here by script.js -->
-        <div class="end-of-list-message" id="endOfList">
-            <p>Thank you for viewing the collection!</p>
-            <p class="sub-message">Did you see anything you liked?</p>
+        <div class="restart-card" id="restartCard">
+            <div class="restart-content">
+                <svg class="restart-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <p>Thank you for viewing!</p>
+                <button id="restartButton" class="restart-button">Look Again</button>
+            </div>
         </div>
     </main>
+    
+    <div id="favoritesModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Your Favorites</h2>
+                <button id="closeModalButton" class="close-button">&times;</button>
+            </div>
+            <div id="favoritesGrid" class="favorites-grid">
+                <!-- Liked items will be inserted here -->
+            </div>
+        </div>
+    </div>
 
-    <footer class="footer">
-        <a href="https://wa.me/917972711924?text=Hi,%20I'm%20interested%20in%20your%20products!" class="whatsapp-button" target="_blank" rel="noopener noreferrer">
-             Enquire on WhatsApp
-        </a>
-    </footer>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search..." aria-label="Search products">
 
     <script src="script.js" defer></script>
 
