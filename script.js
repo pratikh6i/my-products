@@ -2,15 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ⭐ FINAL CONFIGURATION (FOR GITHUB PAGES) ⭐ ---
     //
-    // This script will automatically fetch all media from the 'products' folder.
-    //
     // 1. ⚠️ ACTION REQUIRED: Replace these two values with your details.
     const GITHUB_USERNAME = 'pratikh6i';
     const GITHUB_REPO = 'my-products';
     //
-    // 2. Ensure your product images/videos are in a folder named 'products' in your repository.
-    //
-    // Any files you add to that folder will now appear on the website automatically.
+    // 2. IMPORTANT: Ensure your filenames in the 'products' folder do NOT contain
+    //    special characters like '#' or '?'. Use only letters, numbers, hyphens, and underscores.
+    //    For example: 'blue_saree_1.jpg' is good. 'blue saree #1.jpg' is bad.
     //
     const PRODUCTS_FOLDER = 'products';
     const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${PRODUCTS_FOLDER}`;
@@ -34,14 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const files = await response.json();
+            
+            // For debugging: This will show the list of files found in your browser's developer console (F12)
+            console.log("Files found on GitHub:", files);
+
             const mediaFiles = files.filter(file =>
-                file.type === 'file' && /\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i.test(file.name)
+                file.type === 'file' && file.download_url && /\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i.test(file.name)
             );
 
             statusMessage.style.display = 'none';
 
             if (!Array.isArray(mediaFiles) || mediaFiles.length === 0) {
-                displayMessage("No products found. Upload images and videos to the 'products' folder on GitHub.");
+                displayMessage("No products found. Upload images and videos to the 'products' folder on GitHub. Make sure filenames do not contain special characters like '#' or '?'.");
                 return;
             }
 
