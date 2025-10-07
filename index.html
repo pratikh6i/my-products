@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mami's Collection</title>
+    <!-- Using the 'Inter' font for a clean, modern, and highly readable look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header: Stays fixed at the top. Contains the brand name and search functionality. -->
+    <header class="header">
+        <h1 class="brand-title">Mami's Collection</h1>
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search..." aria-label="Search products">
+            <button id="searchIcon" class="search-button" aria-label="Toggle search">
+                <!-- Search Icon SVG: Clean and universally understood -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Gallery: This is where the product cards will be dynamically inserted by JavaScript. -->
+    <main id="gallery-container" class="gallery-container">
+        <!-- Initial message or loader. This will be replaced once products are loaded. -->
+        <div class="status-message" id="statusMessage">
+            <div class="loader"></div>
+            <p>Loading Collection...</p>
+        </div>
+    </main>
+
+    <!-- Footer: A non-intrusive but clear call-to-action to generate leads via WhatsApp. -->
+    <footer class="footer">
+        <a href="https://wa.me/910000000000?text=Hi,%20I'm%20interested%20in%20your%20products!" class="whatsapp-button" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.655 4.357 1.846 6.067l-1.259 4.605 4.74-1.241z"/></svg>
+            <span>Enquire on WhatsApp</span>
+        </a>
+    </footer>
+
+    <!-- The script file is deferred to ensure the HTML is parsed before the script runs. -->
+    <script src="script.js" defer></script>
+
+</body>
+</html>
