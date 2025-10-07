@@ -1,23 +1,26 @@
-/* --- Professional Design System & Diwali Palette --- */
 :root {
-    --bg-color: #FFF8E1;
-    --primary-text: #5D4037;
-    --accent-color: #C62828;
-    --secondary-accent: #FFC107;
-    --card-bg: #FFFFFF;
-    --shadow-color: rgba(93, 64, 55, 0.15);
-    --like-color: #4CAF50;
-    --dislike-color: #F44336;
+    --bg-color: #331e17;
+    --primary-text: #f0e6d2;
+    --accent-color: #ff8c00;
+    --card-bg: #4a2c2a;
+    --shadow-color: rgba(0, 0, 0, 0.4);
     --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* --- Base & Reset --- */
+/* --- Base & Diwali Themed Background --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; overflow: hidden; } /* Crucial for scroll-snap layout */
+html, body { height: 100%; overflow: hidden; }
 body {
     font-family: var(--font-family);
-    background-color: var(--bg-color);
+    background: linear-gradient(-45deg, #2a1610, #4a2c2a, #2a1610, #4a2c2a);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
     color: var(--primary-text);
+}
+@keyframes gradientBG {
+	0% { background-position: 0% 50%; }
+	50% { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
 }
 
 /* --- Header --- */
@@ -25,106 +28,83 @@ body {
     position: fixed; top: 0; left: 0; width: 100%;
     display: flex; justify-content: space-between; align-items: center;
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(to bottom, rgba(255, 248, 225, 0.8), rgba(255, 248, 225, 0));
+    background: linear-gradient(to bottom, rgba(42, 22, 16, 0.8), rgba(42, 22, 16, 0));
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     z-index: 100;
 }
-.brand-logo { display: flex; align-items: center; gap: 0.75rem; }
+.brand-logo { display: flex; align-items: center; gap: 0.75rem; color: var(--primary-text); text-decoration: none; }
 .brand-title { font-size: 1.25rem; font-weight: 600; }
 .header-actions { display: flex; align-items: center; gap: 0.5rem; }
 .header-button { background: none; border: none; cursor: pointer; padding: 0.5rem; color: var(--primary-text); }
+.header-button svg { width: 26px; height: 26px; }
 
-/* --- Search Input --- */
-.search-input {
-    position: fixed; top: 80px; left: 50%;
-    transform: translate(-50%, -150%);
-    width: 90%; max-width: 400px;
-    padding: 1rem; border-radius: 12px;
-    border: 1px solid var(--shadow-color);
-    font-size: 1.1rem; outline: none;
-    box-shadow: 0 10px 30px var(--shadow-color);
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    z-index: 99;
-}
-.search-input.active { transform: translate(-50%, 0); }
-
-/* --- Status Message & Loader --- */
-.status-message {
-    height: 100%; width: 100%;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    color: var(--primary-text); opacity: 0.7;
-    text-align: center;
-}
-.loader { /* ... same as before ... */ }
-
-/* --- NEW: Instagram Reels-Style Scrolling Gallery --- */
+/* --- Reels-Style Scrolling Gallery --- */
 .gallery-container {
     height: 100%; width: 100%;
     overflow-y: auto;
-    scroll-snap-type: y mandatory; /* The magic for Reels-style scrolling */
+    scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
 }
-
-.product-card, .restart-card {
+.card-wrapper {
     height: 100%; width: 100%;
-    scroll-snap-align: start; /* Each card is a snap point */
+    scroll-snap-align: start;
     scroll-snap-stop: always;
     display: flex; justify-content: center; align-items: center;
     position: relative;
+    padding: 1rem;
+}
+
+/* --- Ambilight Effect --- */
+.product-card {
+    width: 100%; height: 100%;
+    max-width: 500px; max-height: 95vh;
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
     overflow: hidden;
+    background-color: #000;
 }
-
+.product-card::before {
+    content: '';
+    position: absolute;
+    top: -10%; left: -10%;
+    width: 120%; height: 120%;
+    background-image: var(--dominant-color-gradient, linear-gradient(45deg, var(--accent-color), #2a1610));
+    filter: blur(40px);
+    z-index: -1;
+    transition: background-image 0.5s ease-in-out;
+}
 .product-card-media {
-    width: 100%; height: 100%; object-fit: cover; background-color: #eee;
+    width: 100%; height: 100%; object-fit: contain; /* Use contain to see the whole image */
 }
 
-/* --- Interaction Overlay & Buttons --- */
-.card-interactions { /* ... same as before ... */ }
-.interaction-button { /* ... same as before, with minor tweaks ... */ }
-.interaction-button.voted {
-    cursor: not-allowed;
-    transform: scale(1.1);
-    box-shadow: 0 0 20px currentColor;
-    opacity: 0.7;
+/* --- Interaction Overlay & Emoji Buttons --- */
+.card-interactions {
+    position: absolute; right: 1rem; bottom: 10%;
+    display: flex; flex-direction: column; gap: 1.5rem;
 }
+.interaction-button {
+    background: none; border: none; cursor: pointer;
+    font-size: 2.5rem; /* Larger Emojis */
+    text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    line-height: 1;
+}
+.interaction-button:hover { transform: scale(1.2); }
+.interaction-button.selected { transform: scale(1.25); }
+.whatsapp-button-card { /* Separate for WhatsApp */ }
 
 /* --- Restart Card --- */
-.restart-card { background-color: var(--bg-color); }
 .restart-content { text-align: center; color: var(--primary-text); }
-.restart-icon { margin-bottom: 1rem; opacity: 0.5; }
-.restart-content p { font-size: 1.2rem; font-weight: 500; margin-bottom: 1.5rem; }
-.restart-button {
-    background-color: var(--accent-color); color: white;
-    font-weight: 500; text-decoration: none; padding: 0.85rem 1.75rem;
-    border-radius: 50px; border: none; cursor: pointer;
-    box-shadow: 0 5px 20px rgba(198, 40, 40, 0.4);
-    transition: transform 0.3s ease;
-}
-.restart-button:hover { transform: translateY(-3px); }
+.restart-icon { margin-bottom: 1rem; opacity: 0.8; }
+.restart-content p { font-size: 1.2rem; font-weight: 500; text-shadow: 0 1px 5px #000; }
 
 /* --- Favorites Modal --- */
-.modal-overlay { /* ... modal styles ... */ }
-.modal-content { /* ... modal styles ... */ }
-.favorites-grid { /* ... grid styles for liked items ... */ }
-.favorite-item { /* ... style for each item in the modal ... */ }
+.modal-overlay { /* ... existing modal styles ... */ }
 
-/* --- Responsive Grid for Tablets & Desktops --- */
+/* Responsive Grid for Tablets & Desktops */
 @media (min-width: 768px) {
-    html, body { height: auto; overflow: auto; }
-    .gallery-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        height: auto;
-        padding: calc(80px + 2rem) 2rem;
-        scroll-snap-type: none; /* Disable snapping on desktop */
-    }
-    .product-card, .restart-card {
-        scroll-snap-align: none;
-        height: 70vh;
-        border-radius: 20px;
-        box-shadow: 0 20px 50px var(--shadow-color);
-    }
-    .restart-card { display: none; } /* Hide restart card on desktop grid */
+    /* ... existing responsive styles ... */
+    .product-card { max-height: 70vh; }
 }
 

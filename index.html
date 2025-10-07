@@ -8,17 +8,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- Color Thief library for the Ambilight effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
 </head>
 <body>
 
     <header class="header">
-        <div class="brand-logo">
+        <a href="index.html" class="brand-logo" aria-label="Go to homepage">
             <svg width="40" height="40" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M64 4C31.52 4 4 31.52 4 64C4 89.2 18.24 110.88 39.4 119.44C42.84 120.84 45.44 118.44 44.44 115.2C40.6 102.6 38 88.36 38 73.16C38 49 52.6 30.2 74.2 26.8C94.2 23.6 112 38.48 112 59.8C112 85.08 96.2 108.48 74.4 115.2C71.2 116.24 73.6 118.84 75 115.4C90.2 92.4 96 79 90.4 51.6C85.6 28.2 64 20 64 20" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M64 124C79.464 124 92 111.464 92 96C92 80.536 79.464 68 64 68C48.536 68 36 80.536 36 96C36 111.464 48.536 124 64 124Z" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span class="brand-title">Spark Choice</span>
-        </div>
+        </a>
         <div class="header-actions">
              <button id="favoritesButton" class="header-button" aria-label="Show favorites">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
@@ -34,14 +36,7 @@
             <div class="loader"></div>
             <p>Loading the Collection...</p>
         </div>
-        <!-- Product cards will be inserted here by script.js -->
-        <div class="restart-card" id="restartCard">
-            <div class="restart-content">
-                <svg class="restart-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                <p>Thank you for viewing!</p>
-                <button id="restartButton" class="restart-button">Look Again</button>
-            </div>
-        </div>
+        <!-- Product and Restart cards will be inserted here by script.js -->
     </main>
     
     <div id="favoritesModal" class="modal-overlay">
@@ -59,7 +54,6 @@
     <input type="text" id="searchInput" class="search-input" placeholder="Search..." aria-label="Search products">
 
     <script src="script.js" defer></script>
-
 </body>
 </html>
 
