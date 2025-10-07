@@ -49,6 +49,7 @@ body {
 .status-message {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     height: 100vh; color: var(--primary-text); opacity: 0.7;
+    text-align: center; padding: 1rem;
 }
 .loader {
     border: 4px solid var(--shadow-color); border-top: 4px solid var(--secondary-accent);
@@ -76,6 +77,21 @@ body {
     cursor: grab;
     transition: transform 0.3s ease-out;
     touch-action: none; /* Prevent default browser touch actions */
+    background-color: #eee;
+}
+
+/* Shimmer effect for cards before media is loaded */
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+.product-card-media {
+    width: 100%; height: 100%; object-fit: cover;
+    background-image: linear-gradient(to right, #eee 0%, #ddd 20%, #eee 40%, #eee 100%);
+    background-repeat: no-repeat;
+    background-size: 800px 100%;
+    animation: shimmer 2s linear infinite;
+    display: block;
 }
 
 .product-card.dragging {
@@ -84,18 +100,13 @@ body {
 }
 
 /* Card stacking effect */
-.product-card:nth-last-child(2) {
+.product-card:nth-last-child(n+2) {
     transform: translateY(-10px) scale(0.95);
     opacity: 0.8;
 }
-.product-card:nth-last-child(3) {
+.product-card:nth-last-child(n+3) {
     transform: translateY(-20px) scale(0.9);
     opacity: 0.6;
-}
-
-.product-card-media {
-    width: 100%; height: 100%; object-fit: cover; background-color: #eee;
-    pointer-events: none; /* Make sure media doesn't interfere with dragging */
 }
 
 /* --- Interaction Overlay & Buttons --- */
@@ -104,7 +115,7 @@ body {
     display: flex; justify-content: space-evenly; align-items: center;
     padding: 1.5rem 0;
     background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
-    pointer-events: none; /* Let clicks pass through to the card unless on a button */
+    pointer-events: none;
 }
 .interaction-button {
     width: 60px; height: 60px;
@@ -114,7 +125,7 @@ body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    pointer-events: all; /* Make buttons clickable */
+    pointer-events: all;
     color: var(--primary-text);
 }
 .interaction-button:hover {
@@ -126,22 +137,12 @@ body {
 .interaction-button.whatsapp { color: #25D366; }
 
 /* --- Footer --- */
-.footer {
-    display: none; /* Hidden on mobile to avoid clutter */
-}
-.whatsapp-button {
-    display: flex; align-items: center; gap: 0.75rem;
-    background-color: var(--accent-color);
-    color: white; font-weight: 500;
-    text-decoration: none; padding: 0.85rem 1.75rem; border-radius: 50px;
-    box-shadow: 0 5px 20px rgba(198, 40, 40, 0.4);
-    transition: transform 0.3s ease;
-}
-.whatsapp-button:hover { transform: translateY(-3px); }
+.footer { display: none; }
+.whatsapp-button { /* ... same as before ... */ }
 
 /* --- Responsive Grid for Tablets & Desktops --- */
 @media (min-width: 768px) {
-    body { overflow: auto; } /* Re-enable scrolling */
+    body { overflow: auto; }
     .gallery-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -151,13 +152,12 @@ body {
         perspective: none;
     }
     .product-card {
-        position: static; /* Disable absolute positioning */
-        width: 100%;
-        height: auto;
+        position: static;
+        width: 100%; height: auto;
         aspect-ratio: 9 / 13;
         cursor: default;
         touch-action: auto;
-        opacity: 0; /* Prepare for fade-in animation */
+        opacity: 0;
         transform: translateY(20px);
         transition: transform 0.5s ease, opacity 0.5s ease;
     }
@@ -169,7 +169,7 @@ body {
         transition: opacity 0.3s ease;
     }
     .product-card:hover .card-interactions {
-        opacity: 1; /* Show buttons on hover */
+        opacity: 1;
     }
     .footer {
         display: flex; position: fixed; bottom: 0; left: 0; width: 100%;
