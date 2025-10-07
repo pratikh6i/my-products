@@ -3,11 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const GITHUB_USERNAME = 'pratikh6i';
     const GITHUB_REPO = 'my-products';
 
-    // 1. ⚠️ ACTION REQUIRED: Get this URL from the Google Apps Script setup (see README_GoogleSheet.md)
+    // 1. ✅ Google Sheet URL has been updated.
     const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxKuNsxy-sYMSlUteEFkKQXAUyRFMeHT42pQ9eoinZqwhLNdWgR_rR6jLaqmyhp4YvZ/exec';
 
-    // 2. ⚠️ ACTION REQUIRED: Enter your Mami's WhatsApp number with the country code (no + or spaces)
-    const WHATSAPP_PHONE_NUMBER = '910000000000'; // Example for India
+    // 2. ✅ WhatsApp number has been updated.
+    const WHATSAPP_PHONE_NUMBER = '917972711924';
     
     const PRODUCTS_FOLDER = 'products';
     const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${PRODUCTS_FOLDER}`;
@@ -17,120 +17,131 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusMessage = document.getElementById('statusMessage');
     let productCards = [];
     let currentIndex = 0;
+    let allMediaFiles = [];
 
-    async function fetchAndDisplayProducts() {
-        // ... (fetch logic is the same as before)
+    // --- NEW: Robust Media Loading ---
+    async function initializeGallery() {
         try {
+            // Step 1: Fetch the list of all files from GitHub
+            statusMessage.innerHTML = '<div class="loader"></div><p>Discovering products...</p>';
             const response = await fetch(GITHUB_API_URL);
             if (!response.ok) throw new Error(`GitHub API Error: ${response.statusText}`);
             const files = await response.json();
-            const mediaFiles = files.filter(file => file.type === 'file' && file.download_url && /\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i.test(file.name));
+            
+            allMediaFiles = files.filter(file => 
+                file.type === 'file' && file.download_url && /\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i.test(file.name)
+            );
 
-            statusMessage.style.display = 'none';
-            if (mediaFiles.length === 0) {
+            if (allMediaFiles.length === 0) {
                 displayMessage("No products found.");
                 return;
             }
 
-            // Create cards in reverse order for correct visual stacking
-            mediaFiles.reverse().forEach(file => {
-                const card = createProductCard(file.name, file.download_url);
-                galleryContainer.appendChild(card);
-            });
+            // Reverse for correct visual stacking later
+            allMediaFiles.reverse();
+
+            // Step 2: Preload initial media and create cards
+            statusMessage.innerHTML = '<div class="loader"></div><p>Loading collection...</p>';
+            await preloadAndCreateCards();
             
+            statusMessage.style.display = 'none';
+
+            // Step 3: Setup interactions
             productCards = document.querySelectorAll('.product-card');
-            
-            // Different setup for mobile vs desktop
             if (window.innerWidth < 768) {
                 setupSwipeListeners();
+                playTopCardVideo(); // Start the first video if it is one
             } else {
                 setupIntersectionObserver();
             }
 
         } catch (error) {
-            console.error('Fetch Error:', error);
+            console.error('Initialization Error:', error);
             displayMessage(error.message);
         }
     }
 
-    function createProductCard(filename, fileUrl) {
+    function preloadAndCreateCards() {
+        const promises = allMediaFiles.map(file => {
+            return new Promise((resolve, reject) => {
+                const isVideo = /\.(mp4|webm|mov)$/i.test(file.name);
+                const element = isVideo ? document.createElement('video') : document.createElement('img');
+                
+                const onMediaLoaded = () => {
+                    const card = createProductCard(file.name, file.download_url, element);
+                    galleryContainer.appendChild(card);
+                    resolve();
+                };
+
+                element.onload = onMediaLoaded; // For images
+                element.oncanplaythrough = onMediaLoaded; // For videos
+                element.onerror = () => {
+                    console.error('Failed to load media:', file.name);
+                    // Still resolve so the app doesn't hang, but this item won't be shown
+                    resolve(); 
+                };
+                
+                element.src = file.download_url;
+                if (isVideo) element.load(); // Start loading video metadata
+            });
+        });
+        return Promise.all(promises);
+    }
+    
+    function createProductCard(filename, fileUrl, preloadedMediaElement) {
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.dataset.name = filename; // Store full filename
+        card.dataset.name = filename;
 
-        // Media element (Image or Video)
-        const mediaElement = createMediaElement(filename, fileUrl);
+        // Use the preloaded media element
+        const mediaElement = preloadedMediaElement;
+        mediaElement.className = 'product-card-media';
+        if (mediaElement.tagName === 'VIDEO') {
+            mediaElement.autoplay = true; mediaElement.loop = true; mediaElement.muted = true; mediaElement.playsInline = true;
+        } else {
+            mediaElement.alt = filename;
+        }
         card.appendChild(mediaElement);
 
-        // Interactions Overlay
+        // Interactions (same as before)
         const interactions = document.createElement('div');
         interactions.className = 'card-interactions';
-        
-        // Buttons
         const dislikeBtn = createInteractionButton('dislike', 'M13 4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9Zm0 2H4v6h9V6Zm6-2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h1Z', () => handleLikeDislike(filename, 'dislike', card));
         const likeBtn = createInteractionButton('like', 'M12 4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9Zm0 2H3v6h9V6Zm8-2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h1Z', () => handleLikeDislike(filename, 'like', card));
         const whatsappBtn = createInteractionButton('whatsapp', 'M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM9.53 9.02c-.27-.42-1.16-.9-1.3-1.03-.14-.12-.28-.18-.48-.18s-.49.12-.66.36c-.17.24-.66.8-.81 1.2s-.3.66-.15 1.02c.14.36.66.96 1.2 1.5.83.83 1.58 1.1 1.81 1.2.24.12.36.1.49-.06.13-.17.55-.64.7-1.2.14-.58.1-.96-.06-1.1s-.42-.24-.55-.3z', () => shareOnWhatsApp(filename, fileUrl));
-        
         interactions.append(dislikeBtn, whatsappBtn, likeBtn);
         card.appendChild(interactions);
+        
         return card;
     }
 
-    // Helper functions for card creation
-    function createMediaElement(filename, fileUrl) {
-        const fileExtension = filename.split('.').pop().toLowerCase();
-        const media = ['mp4', 'webm', 'mov'].includes(fileExtension) ? document.createElement('video') : document.createElement('img');
-        media.className = 'product-card-media';
-        media.src = fileUrl;
-        if (media.tagName === 'VIDEO') {
-            media.autoplay = true; media.loop = true; media.muted = true; media.playsInline = true;
-        } else {
-            media.alt = filename; media.loading = 'lazy';
-        }
-        return media;
-    }
-    
+    // --- Other Functions (mostly unchanged) ---
     function createInteractionButton(type, svgPath, onClick) {
         const btn = document.createElement('button');
         btn.className = `interaction-button ${type}`;
         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="${svgPath}"/></svg>`;
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card drag from firing on button click
-            onClick();
-        });
+        btn.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
         return btn;
     }
 
-    // --- New Feature Logic ---
     async function handleLikeDislike(filename, action, card) {
-        if (GOOGLE_SHEET_API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-            alert('Google Sheet API is not configured in script.js');
-            return;
-        }
-        
-        // Animate the card out
         const angle = action === 'like' ? 15 : -15;
         card.style.transform = `translate(${angle * 10}px, -30px) rotate(${angle}deg)`;
         setTimeout(removeTopCard, 200);
 
         try {
             await fetch(GOOGLE_SHEET_API_URL, {
-                method: 'POST',
-                mode: 'no-cors', // Important for Apps Script
-                headers: {'Content-Type': 'application/json'},
+                method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ filename, action })
             });
-        } catch (error) {
-            console.error('Error updating sheet:', error);
-        }
+        } catch (error) { console.error('Error updating sheet:', error); }
     }
-
+    
     function shareOnWhatsApp(filename, fileUrl) {
         const message = encodeURIComponent(`Hi, I'm interested in this product: ${filename}\n\n${fileUrl}`);
         window.open(`https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${message}`, '_blank');
     }
 
-    // --- Tinder-Style Swipe Logic ---
     function setupSwipeListeners() {
         let startX, startY, isDragging = false, card;
 
@@ -189,20 +200,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = productCards[currentIndex];
             card.style.display = 'none';
             currentIndex++;
-            if (currentIndex >= productCards.length) {
-                displayMessage("That's all for now!");
-            }
+            playTopCardVideo();
+            if (currentIndex >= productCards.length) { displayMessage("That's all for now!"); }
         }
     }
 
-    // Desktop animation setup
-    function setupIntersectionObserver() {
-        // ... (same as before)
+    function playTopCardVideo() {
+        if (currentIndex < productCards.length) {
+            const topCard = productCards[currentIndex];
+            const video = topCard.querySelector('video');
+            if (video) {
+                video.play();
+            }
+        }
     }
+    
+    function setupIntersectionObserver() {
+        const options = { root: null, rootMargin: '0px', threshold: 0.2 };
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, options);
+
+        document.querySelectorAll('.product-card').forEach(card => observer.observe(card));
+    }
+    
     function displayMessage(message) {
-        // ... (same as before)
+        statusMessage.style.display = 'flex';
+        statusMessage.innerHTML = `<p>${message}</p>`;
     }
 
-    fetchAndDisplayProducts();
+    // Start the whole process
+    initializeGallery();
 });
 
