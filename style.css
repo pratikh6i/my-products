@@ -1,11 +1,13 @@
 /* --- Professional Design System & Diwali Palette --- */
 :root {
-    --bg-color: #FFF8E1; /* Warm, festive cream */
-    --primary-text: #5D4037; /* Deep, rich brown */
-    --accent-color: #C62828; /* Festive maroon red */
-    --secondary-accent: #FFC107; /* Bright, celebratory gold */
+    --bg-color: #FFF8E1;
+    --primary-text: #5D4037;
+    --accent-color: #C62828;
+    --secondary-accent: #FFC107;
     --card-bg: #FFFFFF;
     --shadow-color: rgba(93, 64, 55, 0.1);
+    --like-color: #4CAF50;
+    --dislike-color: #F44336;
     --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -16,12 +18,12 @@ body {
     font-family: var(--font-family);
     background-color: var(--bg-color);
     color: var(--primary-text);
-    overflow-x: hidden;
+    overflow: hidden; /* Important for swipe interface */
     background-image: radial-gradient(var(--shadow-color) 0.5px, transparent 0.5px);
     background-size: 15px 15px;
 }
 
-/* --- Header & New Logo --- */
+/* --- Header --- */
 .header {
     position: fixed; top: 0; left: 0; width: 100%;
     display: flex; justify-content: space-between; align-items: center;
@@ -30,23 +32,23 @@ body {
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     z-index: 100;
 }
-.brand-logo { display: flex; align-items: center; gap: 0.75rem; color: var(--primary-text); }
+.brand-logo { display: flex; align-items: center; gap: 0.75rem; }
 .brand-title { font-size: 1.25rem; font-weight: 600; }
 .search-wrapper { display: flex; align-items: center; }
 .search-input {
     border: none; outline: none; border-bottom: 2px solid var(--secondary-accent);
     background-color: transparent; width: 0;
-    font-size: 1rem; font-family: var(--font-family); color: var(--primary-text);
+    font-size: 1rem; color: var(--primary-text);
     transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     opacity: 0; padding-right: 0.5rem;
 }
 .search-input.active { width: 140px; opacity: 1; }
-.search-button { background: none; border: none; cursor: pointer; padding: 0.25rem; color: var(--primary-text); }
+.search-button { background: none; border: none; cursor: pointer; padding: 0.25rem; }
 
 /* --- Status Message & Loader --- */
 .status-message {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    height: 80vh; color: var(--primary-text); opacity: 0.7;
+    height: 100vh; color: var(--primary-text); opacity: 0.7;
 }
 .loader {
     border: 4px solid var(--shadow-color); border-top: 4px solid var(--secondary-accent);
@@ -55,88 +57,133 @@ body {
 }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
-/* --- Gallery Container --- */
+/* --- Mobile-First Tinder-Style Swipe Gallery --- */
 .gallery-container {
-    padding: calc(80px + 2rem) 1rem; /* Added horizontal padding */
-    display: flex; flex-direction: column; align-items: center;
-    gap: 1.5rem; padding-bottom: 120px;
-    width: 100%;
+    height: 100vh; width: 100vw;
+    display: flex; justify-content: center; align-items: center;
+    perspective: 1000px;
+    overflow: hidden;
+    position: relative;
 }
 
-/* --- Product Card (Mobile First) --- */
 .product-card {
-    width: 100%; max-width: 450px;
-    aspect-ratio: 9 / 13;
+    width: 90vw; max-width: 400px;
+    height: 75vh; max-height: 600px;
     border-radius: 20px; overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.05);
     box-shadow: 0 15px 40px var(--shadow-color);
-    position: sticky; top: 90px;
-    opacity: 0;
-    transform: scale(0.9) translateY(20px);
-    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.7s ease-out, box-shadow 0.4s ease;
-    will-change: transform, opacity, box-shadow;
+    position: absolute;
+    will-change: transform, opacity;
+    cursor: grab;
+    transition: transform 0.3s ease-out;
+    touch-action: none; /* Prevent default browser touch actions */
 }
-.product-card.is-visible {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    box-shadow: 0 20px 50px var(--shadow-color), 0 0 0 4px var(--card-bg), 0 0 0 5px var(--secondary-accent);
+
+.product-card.dragging {
+    transition: none;
+    cursor: grabbing;
 }
+
+/* Card stacking effect */
+.product-card:nth-last-child(2) {
+    transform: translateY(-10px) scale(0.95);
+    opacity: 0.8;
+}
+.product-card:nth-last-child(3) {
+    transform: translateY(-20px) scale(0.9);
+    opacity: 0.6;
+}
+
 .product-card-media {
     width: 100%; height: 100%; object-fit: cover; background-color: #eee;
+    pointer-events: none; /* Make sure media doesn't interfere with dragging */
 }
 
-/* --- Footer & WhatsApp CTA --- */
+/* --- Interaction Overlay & Buttons --- */
+.card-interactions {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    display: flex; justify-content: space-evenly; align-items: center;
+    padding: 1.5rem 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+    pointer-events: none; /* Let clicks pass through to the card unless on a button */
+}
+.interaction-button {
+    width: 60px; height: 60px;
+    border-radius: 50%; border: none;
+    display: flex; justify-content: center; align-items: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    pointer-events: all; /* Make buttons clickable */
+    color: var(--primary-text);
+}
+.interaction-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+.interaction-button.like { color: var(--like-color); }
+.interaction-button.dislike { color: var(--dislike-color); }
+.interaction-button.whatsapp { color: #25D366; }
+
+/* --- Footer --- */
 .footer {
-    position: fixed; bottom: 0; left: 0; width: 100%;
-    padding: 1rem; display: flex; justify-content: center; align-items: center;
-    background: linear-gradient(to top, rgba(255, 248, 225, 0.8), rgba(255, 248, 225, 0));
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    z-index: 100;
+    display: none; /* Hidden on mobile to avoid clutter */
 }
 .whatsapp-button {
     display: flex; align-items: center; gap: 0.75rem;
     background-color: var(--accent-color);
-    color: white; font-family: var(--font-family); font-weight: 500;
+    color: white; font-weight: 500;
     text-decoration: none; padding: 0.85rem 1.75rem; border-radius: 50px;
     box-shadow: 0 5px 20px rgba(198, 40, 40, 0.4);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
 }
-.whatsapp-button:hover {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(198, 40, 40, 0.5);
-}
+.whatsapp-button:hover { transform: translateY(-3px); }
 
-
-/* --- ⭐ RESPONSIVE SETTINGS FOR TABLETS & LAPTOPS ⭐ --- */
-
-/* For Tablets (and larger screens) */
+/* --- Responsive Grid for Tablets & Desktops --- */
 @media (min-width: 768px) {
+    body { overflow: auto; } /* Re-enable scrolling */
     .gallery-container {
         display: grid;
-        grid-template-columns: repeat(2, 1fr); /* 2 columns */
+        grid-template-columns: repeat(2, 1fr);
         gap: 2rem;
-        max-width: 1200px;
-        margin: 0 auto; /* Center the grid */
-        padding-top: calc(80px + 2rem);
+        height: auto;
+        padding: calc(80px + 2rem) 2rem;
+        perspective: none;
     }
     .product-card {
-        position: static; /* Disables sticky scrolling for grid view */
+        position: static; /* Disable absolute positioning */
         width: 100%;
+        height: auto;
+        aspect-ratio: 9 / 13;
+        cursor: default;
+        touch-action: auto;
+        opacity: 0; /* Prepare for fade-in animation */
+        transform: translateY(20px);
+        transition: transform 0.5s ease, opacity 0.5s ease;
     }
     .product-card.is-visible {
-        /* Adjust animation for grid */
-        box-shadow: 0 15px 40px var(--shadow-color);
+        opacity: 1; transform: translateY(0);
     }
-    .product-card:hover {
-        transform: scale(1.03);
-        box-shadow: 0 20px 50px var(--shadow-color), 0 0 0 4px var(--card-bg), 0 0 0 5px var(--secondary-accent);
+    .card-interactions {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .product-card:hover .card-interactions {
+        opacity: 1; /* Show buttons on hover */
+    }
+    .footer {
+        display: flex; position: fixed; bottom: 0; left: 0; width: 100%;
+        padding: 1rem; justify-content: center; align-items: center;
+        background: linear-gradient(to top, rgba(255, 248, 225, 0.8), rgba(255, 248, 225, 0));
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
 }
 
-/* For Laptops/Desktops (and larger screens) */
 @media (min-width: 1024px) {
     .gallery-container {
-        grid-template-columns: repeat(3, 1fr); /* 3 columns */
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 1200px;
+        margin: 0 auto;
     }
 }
 
