@@ -1,14 +1,14 @@
 /* --- Professional Design System & Diwali Palette --- */
 :root {
-    --bg-color: #FFF8E1; /* Warm, festive cream */
-    --primary-text: #5D4037; /* Deep, rich brown */
-    --accent-color: #C62828; /* Festive maroon red */
-    --like-color: #E91E63; /* Vibrant Pink for Likes */
-    --secondary-accent: #FFC107; /* Bright, celebratory gold */
+    --bg-color: #FFF8E1;
+    --primary-text: #5D4037;
+    --accent-color: #C62828;
+    --like-color: #E91E63;
+    --secondary-accent: #FFC107;
     --card-bg: #FFFFFF;
     --shadow-color: rgba(93, 64, 55, 0.1);
     --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --glow-color: rgba(255, 193, 7, 0.5); /* Initial glow color */
+    --glow-color: rgba(255, 193, 7, 0); /* Initial transparent glow */
 }
 
 /* --- Base & Reset --- */
@@ -20,21 +20,10 @@ body {
     color: var(--primary-text);
     overflow: hidden; /* Prevent body scroll, gallery will handle it */
     position: relative;
-    height: 100vh; /* Full height for mobile layout */
+    height: 100vh;
 }
 
-/* --- Dynamic Background & Festive Glows --- */
-.background-glow {
-    position: fixed;
-    top: 50%; left: 50%;
-    width: 150vw; height: 150vh;
-    background-color: var(--glow-color);
-    transform: translate(-50%, -50%);
-    filter: blur(150px);
-    opacity: 0.5;
-    transition: background-color 1s ease-in-out;
-    z-index: -2;
-}
+/* --- Festive Corner Glows --- */
 .diya-glow {
     position: fixed;
     width: 200px; height: 200px;
@@ -87,7 +76,6 @@ body {
     width: 100%;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
-    scroll-padding-top: 20px;
 }
 
 /* --- Product Card (Mobile First) --- */
@@ -95,31 +83,33 @@ body {
     width: calc(100% - 2rem);
     height: calc(100vh - 80px);
     margin: 40px 1rem;
-    max-height: 80vh;
     border-radius: 20px;
     overflow: hidden;
     background-color: var(--card-bg);
-    box-shadow: 0 15px 40px var(--shadow-color);
     position: relative;
     scroll-snap-align: center;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
+    /* The dynamic glow is applied here */
+    box-shadow: 0 10px 30px var(--shadow-color), 0 0 0px 0px var(--glow-color);
+    transition: box-shadow 0.8s ease-in-out;
+}
+.product-card.is-glowing {
+    box-shadow: 0 10px 30px var(--shadow-color), 0 0 50px 10px var(--glow-color);
 }
 .product-card-media {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     object-fit: cover;
     cursor: pointer;
 }
 .product-card-actions {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
+    bottom: 15px;
+    right: 15px; /* Moved slightly to the right */
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     z-index: 10;
 }
 .action-button {
@@ -127,74 +117,81 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(0,0,0,0.05);
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 40px; /* 20% smaller */
+    height: 40px; /* 20% smaller */
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
 }
 .action-button:active { transform: scale(0.9); }
-.action-button svg { width: 24px; height: 24px; transition: all 0.2s ease; }
+.action-button svg, .action-button img { width: 20px; height: 20px; transition: all 0.2s ease; }
 .action-button.like-btn svg { stroke: var(--primary-text); fill: none; }
 .action-button.like-btn.voted { background-color: var(--like-color); }
 .action-button.like-btn.voted svg { stroke: white; fill: white; transform: scale(1.1); }
-.action-button.dislike-btn svg { stroke: var(--primary-text); }
-.action-button.dislike-btn.voted { background-color: var(--primary-text); }
-.action-button.dislike-btn.voted svg { stroke: white; }
-.action-button.whatsapp-btn { background-color: #25D366; }
-.action-button.whatsapp-btn svg { fill: white; }
+.action-button.whatsapp-btn { background-color: transparent; }
+.action-button.whatsapp-btn img { width: 40px; height: 40px; }
+
+/* The product name is now hidden from the user */
 .product-name {
-    position: absolute;
-    bottom: 15px;
-    left: 20px;
-    font-size: 1rem;
-    font-weight: 500;
-    color: white;
-    padding: 5px 12px;
-    border-radius: 12px;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(5px);
-    max-width: calc(100% - 100px);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none;
 }
 
+/* --- Scroll Prompt & End Card --- */
+.intro-card, .end-card {
+    height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    color: var(--primary-text);
+}
+.scroll-prompt-animation {
+    margin-top: 1.5rem;
+    animation: bounce 2s infinite;
+}
+.scroll-prompt-animation svg { width: 40px; height: 40px; opacity: 0.7; }
+@keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-20px); } 60% { transform: translateY(-10px); } }
+#scrollToTopBtn {
+    font-family: var(--font-family);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: white;
+    background-color: var(--accent-color);
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(198, 40, 40, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+#scrollToTopBtn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(198, 40, 40, 0.5);
+}
 
 /* --- Fullscreen Modal --- */
 .fullscreen-modal {
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
+    position: fixed; z-index: 1000;
+    left: 0; top: 0; width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(10px);
-    display: none; /* Hidden by default */
-    justify-content: center;
-    align-items: center;
+    display: none; justify-content: center; align-items: center;
 }
 .fullscreen-modal.visible { display: flex; }
 .modal-content { max-width: 95vw; max-height: 95vh; }
-.modal-content img, .modal-content video {
-    width: 100%; height: 100%;
-    object-fit: contain;
-}
+.modal-content img, .modal-content video { width: 100%; height: 100%; object-fit: contain; }
 .close-button {
-    position: absolute;
-    top: 20px; right: 35px;
-    color: #fff;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
+    position: absolute; top: 20px; right: 35px; color: #fff;
+    font-size: 40px; font-weight: bold; cursor: pointer;
 }
 
-/* --- Footer --- */
-.footer { display: none; /* Hidden on mobile to keep focus on reels */ }
-
-/* --- ⭐ RESPONSIVE SETTINGS FOR TABLETS & LAPTOPS ⭐ --- */
+/* --- Responsive Settings for Desktop --- */
 @media (min-width: 768px) {
     body { overflow: auto; }
     .gallery-container {
@@ -206,12 +203,11 @@ body {
         margin: 0 auto;
         padding: 100px 2rem 50px 2rem;
         overflow-y: visible;
-        scroll-snap-type: none; /* Disable snapping on desktop */
+        scroll-snap-type: none;
     }
     .product-card {
         scroll-snap-align: none;
-        width: 100%;
-        height: auto;
+        width: 100%; height: auto;
         aspect-ratio: 9 / 13;
         margin: 0;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -220,24 +216,5 @@ body {
         transform: translateY(-10px) scale(1.02);
         box-shadow: 0 20px 50px var(--shadow-color), 0 0 0 4px var(--card-bg), 0 0 0 5px var(--secondary-accent);
     }
-    .footer {
-        position: static;
-        display: flex;
-        padding: 2rem;
-        background: transparent;
-        backdrop-filter: none;
-    }
-    .whatsapp-button {
-        display: flex; align-items: center; gap: 0.75rem;
-        background-color: var(--accent-color);
-        color: white; font-family: var(--font-family); font-weight: 500;
-        text-decoration: none; padding: 0.85rem 1.75rem; border-radius: 50px;
-        box-shadow: 0 5px 20px rgba(198, 40, 40, 0.4);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        margin: 0 auto;
-    }
-    .whatsapp-button:hover {
-        transform: translateY(-4px) scale(1.05);
-        box-shadow: 0 8px 25px rgba(198, 40, 40, 0.5);
-    }
+    .intro-card, .end-card { display: none; } /* Hide scroll helpers on desktop */
 }
