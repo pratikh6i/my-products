@@ -1,116 +1,374 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- ⭐ FINAL CONFIGURATION ⭐ ---
+
+    // --- ⭐ FINAL CONFIGURATION (FOR GITHUB & GOOGLE SHEETS) ⭐ ---
+    //
+    // 1. ⚠️ ACTION REQUIRED: Replace these values with your details.
     const GITHUB_USERNAME = 'pratikh6i';
     const GITHUB_REPO = 'my-products';
-    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyUp6v1siZRQW1ydR61hLrLMwgXrHofKJNNjHsjxYU7n8Qy8Q_syQFuEFkCK9B3i1Sr/exec';
-    const WHATSAPP_PHONE_NUMBER = '917972711924';
+    const WHATSAPP_NUMBER = '919876543210'; // Use country code, no '+', no spaces.
     
-    // --- Unique User Identifier & State ---
-    const userId = localStorage.getItem('sparkChoiceUserId') || crypto.randomUUID();
-    localStorage.setItem('sparkChoiceUserId', userId);
-    let votes = JSON.parse(localStorage.getItem('votes') || '{}');
-    let likedItems = JSON.parse(localStorage.getItem('likedItems') || '[]');
+    // 2. ⚠️ ACTION REQUIRED: Deploy your Google Apps Script and paste the Web App URL here.
+    const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec'; 
 
-    // --- DOM Elements ---
+    // 3. IMPORTANT: Ensure filenames in the 'products' folder do NOT contain
+    //    special characters like '#' or '?'. Use only letters, numbers, hyphens, and underscores.
+    const PRODUCTS_FOLDER = 'products';
+    const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${PRODUCTS_FOLDER}`;
+    // --- END OF CONFIGURATION ---
+
+
+    // --- Element Selectors ---
     const galleryContainer = document.getElementById('gallery-container');
     const statusMessage = document.getElementById('statusMessage');
-    const backgroundGlow = document.getElementById('backgroundGlow');
-    const fullscreenViewer = document.getElementById('fullscreen-viewer');
-    const viewerContent = fullscreenViewer.querySelector('.viewer-content');
-    const closeViewerBtn = fullscreenViewer.querySelector('.close-viewer-btn');
-    // ... other DOM elements
+    const searchInput = document.getElementById('searchInput');
+    const searchIcon = document.getElementById('searchIcon');
+    const fullscreenModal = document.getElementById('fullscreen-modal');
+    const modalContent = document.getElementById('modal-content');
+    const closeModalBtn = document.querySelector('.close-button');
+    const globalWhatsappLink = document.getElementById('global-whatsapp-link');
 
-    // ... (Main Initialization `initializeGallery`, `renderGallery` remain the same)
+    // --- State Management ---
+    let userId = getUserId();
+    let userVotes = JSON.parse(localStorage.getItem('userVotes')) || {};
+    let viewStartTime = null;
+    let currentVisibleProduct = null;
+    const colorThief = new ColorThief();
 
-    function createCard(file) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'card-wrapper';
-        wrapper.dataset.name = file.name;
-    
+    // --- Initial Setup ---
+    globalWhatsappLink.href = `https://wa.me/${WHATSAPP_NUMBER}?text=Hi,%20I'm%20interested%20in%20your%20products!`;
+    fetchAndDisplayProducts();
+
+
+    /**
+     * Generates or retrieves a unique user ID from localStorage.
+     * @returns {string} The unique user ID.
+     */
+    function getUserId() {
+        let id = localStorage.getItem('sparkChoiceUserId');
+        if (!id) {
+            id = Date.now().toString(36) + Math.random().toString(36).substring(2);
+            localStorage.setItem('sparkChoiceUserId', id);
+        }
+        return id;
+    }
+
+    /**
+     * Fetches product list from GitHub API and populates the gallery.
+     */
+    async function fetchAndDisplayProducts() {
+        try {
+            const response = await fetch(GITHUB_API_URL);
+            if (!response.ok) {
+                throw new Error(`GitHub API Error: ${response.status}. Check username/repo settings and ensure the repository is public.`);
+            }
+            const files = await response.json();
+
+            const mediaFiles = files.filter(file =>
+                file.type === 'file' && /\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i.test(file.name)
+            );
+
+            if (!Array.isArray(mediaFiles) || mediaFiles.length === 0) {
+                displayMessage("No products found. Add media to the 'products' folder on GitHub.");
+                return;
+            }
+
+            statusMessage.style.display = 'none';
+            mediaFiles.forEach(file => {
+                const productCard = createProductCard(file.name, file.download_url);
+                galleryContainer.appendChild(productCard);
+            });
+
+            setupIntersectionObserver();
+
+        } catch (error) {
+            console.error('Failed to fetch products:', error);
+            displayMessage(error.message);
+        }
+    }
+
+    /**
+     * Creates a product card element with all its interactive components.
+     * @param {string} filename - The name of the media file.
+     * @param {string} fileUrl - The direct download URL for the media.
+     * @returns {HTMLElement} The complete product card element.
+     */
+    function createProductCard(filename, fileUrl) {
         const card = document.createElement('div');
         card.className = 'product-card';
-        wrapper.appendChild(card);
-    
-        const media = /\.(mp4|webm|mov)$/i.test(file.name) ? document.createElement('video') : document.createElement('img');
-        media.className = 'product-card-media';
-        media.crossOrigin = "Anonymous";
-        media.src = file.url;
-        // ... (media event listeners for onload/oncanplay)
-        card.appendChild(media);
+        card.dataset.productId = filename; // Unique identifier for analytics
 
-        // ✅ Open fullscreen viewer on click
-        card.addEventListener('click', () => showFullscreen(file));
+        const productName = filename.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        card.dataset.name = productName.toLowerCase();
         
-        const interactions = document.createElement('div');
-        interactions.className = 'card-interactions';
+        const fileExtension = filename.split('.').pop().toLowerCase();
+        const isVideo = ['mp4', 'webm', 'mov'].includes(fileExtension);
         
-        // ✅ NEW SVG Buttons
-        const likeSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
-        const dislikeSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>';
-        const whatsappSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.75 13.96c.25.13.43.2.5.33.07.13.07.65-.03.81-.1.17-.38.34-.58.34-.2 0-.34-.03-.5-.03-.17 0-1.16-.34-1.5-.55-.34-.2-.5-.38-.67-.55-.17-.17-.42-.42-.42-.83s.42-.92.58-1.08c.17-.17.34-.25.5-.25.17 0 .34.08.5.25.17.17.25.42.25.58 0 .17-.08.34-.17.5zm-3.13-2.5c-.34-.16-.5-.25-.75-.25-.25 0-.5.08-.67.25-.16.17-.25.42-.25.58 0 .42.25.83.67 1.25.42.42 1 .83 1.84 1.25.83.42 1.42.67 1.84.67.42 0 .83-.08 1.17-.25.3-.2.5-.46.58-.75.07-.3.07-.67 0-1-.07-.33-.5-.75-1-1.08-.5-.33-1.17-.5-1.84-.5-.66 0-1.25.17-1.75.5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path></svg>';
-
-        interactions.innerHTML = `
-            <button class="interaction-button dislike-btn" onclick="event.stopPropagation()">${dislikeSVG}</button>
-            <button class="interaction-button whatsapp-btn" onclick="event.stopPropagation()">${whatsappSVG}</button>
-            <button class="interaction-button like-btn" onclick="event.stopPropagation()">${likeSVG}</button>
-        `;
-        card.appendChild(interactions);
-
-        // Attach listeners after creation
-        interactions.querySelector('.like-btn').addEventListener('click', () => handleLikeDislike(file, 'like'));
-        interactions.querySelector('.dislike-btn').addEventListener('click', () => handleLikeDislike(file, 'dislike'));
-        interactions.querySelector('.whatsapp-btn').addEventListener('click', () => shareOnWhatsApp(file.name, file.url));
-
-        updateVoteUI(file.name, wrapper);
-        return wrapper;
-    }
-    
-    // --- ✅ Fullscreen Viewer Logic ---
-    function showFullscreen(file) {
-        viewerContent.innerHTML = '';
-        const isVideo = /\.(mp4|webm|mov)$/i.test(file.name);
-        const media = isVideo ? document.createElement('video') : document.createElement('img');
-        media.src = file.url;
+        let mediaElement;
         if (isVideo) {
-            media.controls = true; media.autoplay = true;
+            mediaElement = document.createElement('video');
+            mediaElement.src = fileUrl;
+            mediaElement.autoplay = true;
+            mediaElement.loop = true;
+            mediaElement.muted = true;
+            mediaElement.playsInline = true;
+        } else {
+            mediaElement = document.createElement('img');
+            mediaElement.src = fileUrl;
+            mediaElement.alt = productName;
+            mediaElement.loading = 'lazy';
+            mediaElement.crossOrigin = "Anonymous"; // Required for Color Thief
+            mediaElement.addEventListener('load', () => {
+                card.dataset.isImageLoaded = 'true'; // Flag for observer
+            });
         }
-        viewerContent.appendChild(media);
-        fullscreenViewer.classList.add('visible');
+        mediaElement.className = 'product-card-media';
+        
+        // --- Interactive Elements ---
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'product-name';
+        nameLabel.textContent = productName;
+
+        const actionsContainer = document.createElement('div');
+        actionsContainer.className = 'product-card-actions';
+
+        const likeBtn = createActionButton('like', handleVote);
+        const dislikeBtn = createActionButton('dislike', handleVote);
+        const whatsappBtn = createActionButton('whatsapp', () => {
+            const text = `Hi, I'm interested in this product: ${productName}`;
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+        });
+
+        // Set initial voted state
+        if (userVotes[filename] === 'like') likeBtn.classList.add('voted');
+        if (userVotes[filename] === 'dislike') dislikeBtn.classList.add('voted');
+        
+        actionsContainer.append(likeBtn, dislikeBtn, whatsappBtn);
+        card.append(mediaElement, nameLabel, actionsContainer);
+
+        // Event listener for fullscreen view
+        mediaElement.addEventListener('click', () => openModal(fileUrl, isVideo));
+
+        return card;
     }
-    closeViewerBtn.addEventListener('click', () => fullscreenViewer.classList.remove('visible'));
-    fullscreenViewer.addEventListener('click', (e) => {
-        if (e.target === fullscreenViewer) fullscreenViewer.classList.remove('visible');
-    });
+    
+    /**
+     * Helper to create action buttons for the card.
+     * @param {string} type - 'like', 'dislike', or 'whatsapp'.
+     * @param {Function} onClickHandler - The function to call on click.
+     * @returns {HTMLElement} The button element.
+     */
+    function createActionButton(type, onClickHandler) {
+        const button = document.createElement('button');
+        button.className = `action-button ${type}-btn`;
+        button.dataset.type = type;
 
-    // ... (handleLikeDislike, updateVoteUI, setupStrictScrolling, etc. remain the same)
-
-    // --- ✅ FIXED Analytics Function ---
-    async function sendAnalytics(type, data) {
-        const payload = {
-            type,
-            timestamp: new Date().toISOString(),
-            userId,
-            filename: data.filename || currentVisibleCardWrapper?.dataset.name || 'unknown',
-            ...data
+        const icons = {
+            like: `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`,
+            dislike: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
+            whatsapp: `<svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.655 4.357 1.846 6.067l-1.259 4.605 4.74-1.241z"/></svg>`
         };
+        button.innerHTML = icons[type];
+        button.addEventListener('click', onClickHandler);
+        return button;
+    }
 
-        // For Google Apps Script, the payload must be a stringified form data or simple text
-        // We will send it as a stringified JSON
+    /**
+     * Sets up the Intersection Observer to track view time and trigger effects.
+     */
+    function setupIntersectionObserver() {
+        const options = { root: galleryContainer, threshold: 0.8 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const card = entry.target;
+                const productId = card.dataset.productId;
+
+                if (entry.isIntersecting) { // Product scrolled INTO view
+                    if (currentVisibleProduct !== productId) {
+                        // Log duration for the PREVIOUS item before switching
+                        logViewDuration(); 
+                        
+                        // Start timer for the NEW item
+                        currentVisibleProduct = productId;
+                        viewStartTime = Date.now();
+
+                        // Trigger dynamic theme
+                        const img = card.querySelector('img');
+                        if (img && card.dataset.isImageLoaded === 'true') {
+                            updateAmbilight(img);
+                        } else {
+                            resetAmbilight(); // Reset for videos or unloaded images
+                        }
+                    }
+                }
+            });
+        }, options);
+
+        document.querySelectorAll('.product-card').forEach(card => observer.observe(card));
+        
+        // Add a listener to log duration when user leaves the page
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                logViewDuration();
+            }
+        });
+    }
+    
+    /**
+     * Handles the logic for liking or disliking a product.
+     * @param {Event} e - The click event.
+     */
+    function handleVote(e) {
+        const button = e.currentTarget;
+        const card = button.closest('.product-card');
+        const productId = card.dataset.productId;
+        const voteType = button.dataset.type;
+
+        const currentVote = userVotes[productId];
+        let newVote = voteType;
+
+        // If clicking the same button again, un-vote
+        if (currentVote === voteType) {
+            newVote = 'none'; 
+        }
+
+        userVotes[productId] = newVote;
+        localStorage.setItem('userVotes', JSON.stringify(userVotes));
+        
+        updateVoteUI(card, newVote);
+
+        sendDataToSheet('vote', {
+            userId: userId,
+            productId: productId,
+            vote: newVote,
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    /**
+     * Logs the view duration of the currently visible product.
+     */
+    function logViewDuration() {
+        if (viewStartTime && currentVisibleProduct) {
+            const duration = Math.round((Date.now() - viewStartTime) / 1000); // Duration in seconds
+            if (duration > 1) { // Only log meaningful views
+                sendDataToSheet('analytics', {
+                    userId: userId,
+                    productId: currentVisibleProduct,
+                    duration: duration,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+        // Reset timer
+        viewStartTime = null;
+        currentVisibleProduct = null;
+    }
+
+    /**
+     * Generic function to send data to the Google Apps Script backend.
+     * @param {string} type - The endpoint type ('vote' or 'analytics').
+     * @param {object} payload - The data object to send.
+     */
+    async function sendDataToSheet(type, payload) {
+        // Do not send analytics if the placeholder URL is still there
+        if (WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
+            console.warn('Analytics Disabled: Please set your WEB_APP_URL in script.js');
+            return;
+        }
+        
         try {
-            await fetch(GOOGLE_SHEET_API_URL, {
+            await fetch(WEB_APP_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Important for cross-origin requests to GAS
-                headers: {
-                    'Content-Type': 'application/json', // Keep this, but GAS will see it in postData
-                },
-                body: JSON.stringify(payload)
+                mode: 'no-cors', // Important for sending to Google Scripts from a different origin
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, ...payload })
             });
         } catch (error) {
-            console.error('Analytics send failed:', error);
+            console.error('Failed to send analytics:', error);
+        }
+    }
+
+    // --- UI & UX Functions ---
+
+    function displayMessage(message) {
+        statusMessage.style.display = 'flex';
+        statusMessage.innerHTML = `<p>${message}</p>`;
+    }
+
+    function handleSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        let firstMatch = null;
+        document.querySelectorAll('.product-card').forEach(card => {
+            const productName = card.dataset.name || '';
+            const isMatch = productName.includes(searchTerm);
+            card.style.display = isMatch ? 'flex' : 'none';
+            if (isMatch && !firstMatch) {
+                firstMatch = card;
+            }
+        });
+        // On desktop, hiding is enough. On mobile, we need to ensure scroll-snap works.
+        // A simple fix is to scroll to the first match.
+        if (firstMatch && window.innerWidth < 768) {
+            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
     
-    // --- Initialize ---
-    initializeGallery();
-});
+    function updateVoteUI(card, vote) {
+        const likeBtn = card.querySelector('.like-btn');
+        const dislikeBtn = card.querySelector('.dislike-btn');
+        likeBtn.classList.remove('voted');
+        dislikeBtn.classList.remove('voted');
 
+        if (vote === 'like') likeBtn.classList.add('voted');
+        if (vote === 'dislike') dislikeBtn.classList.add('voted');
+    }
+
+    function openModal(src, isVideo) {
+        modalContent.innerHTML = '';
+        let mediaElement;
+        if (isVideo) {
+            mediaElement = document.createElement('video');
+            mediaElement.src = src;
+            mediaElement.controls = true;
+            mediaElement.autoplay = true;
+        } else {
+            mediaElement = document.createElement('img');
+            mediaElement.src = src;
+        }
+        modalContent.appendChild(mediaElement);
+        fullscreenModal.classList.add('visible');
+    }
+
+    function closeModal() {
+        fullscreenModal.classList.remove('visible');
+        modalContent.innerHTML = ''; // Stop video playback
+    }
+
+    function updateAmbilight(img) {
+        try {
+            const [r, g, b] = colorThief.getColor(img);
+            document.documentElement.style.setProperty('--glow-color', `rgba(${r}, ${g}, ${b}, 0.5)`);
+        } catch (e) {
+            console.error('ColorThief error:', e);
+            resetAmbilight();
+        }
+    }
+
+    function resetAmbilight() {
+        document.documentElement.style.setProperty('--glow-color', 'rgba(255, 193, 7, 0.5)');
+    }
+
+
+    // --- Event Listeners ---
+    searchIcon.addEventListener('click', () => {
+        searchInput.classList.toggle('active');
+        searchInput.focus();
+    });
+    searchInput.addEventListener('input', handleSearch);
+    closeModalBtn.addEventListener('click', closeModal);
+    fullscreenModal.addEventListener('click', (e) => {
+        if (e.target === fullscreenModal) closeModal();
+    });
+
+});
