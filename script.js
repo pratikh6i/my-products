@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const GITHUB_REPO = 'my-products';
     const WHATSAPP_NUMBER = '919548172711';
     // ⚠️ IMPORTANT: Paste your NEWEST deployed Web App URL here.
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyop2VzmgLhFNaBEMfgfuUxNxF9y3jB64CjathYvtzb-Le1p7ss5CKCKh2qZGqtciO6/exec';
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw8XEnOVcyLQPmwpTyaVk6HI7igFhu2Kvwf48BKHS3sPI5uxXuJNw_SalTuxSPONHIh/exec';
     const PRODUCTS_FOLDER = 'products';
     const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${PRODUCTS_FOLDER}`;
     // --- END OF CONFIGURATION ---
