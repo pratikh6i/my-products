@@ -8,7 +8,8 @@
     --card-bg: #FFFFFF;
     --shadow-color: rgba(93, 64, 55, 0.1);
     --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --glow-color: rgba(255, 193, 7, 0); /* Initial transparent glow */
+    --header-height: 70px; /* Define header height for calculations */
+    --glow-gradient: radial-gradient(circle, rgba(255,193,7,0.5) 0%, rgba(255,193,7,0) 70%);
 }
 
 /* --- Base & Reset --- */
@@ -18,7 +19,7 @@ body {
     font-family: var(--font-family);
     background-color: var(--bg-color);
     color: var(--primary-text);
-    overflow: hidden; /* Prevent body scroll, gallery will handle it */
+    overflow: hidden;
     position: relative;
     height: 100vh;
 }
@@ -39,9 +40,10 @@ body {
 /* --- Header --- */
 .header {
     position: fixed; top: 0; left: 0; width: 100%;
+    height: var(--header-height);
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(to bottom, rgba(255, 248, 225, 0.8), rgba(255, 248, 225, 0));
+    padding: 0 1.5rem;
+    background: linear-gradient(to bottom, rgba(255, 248, 225, 0.9), rgba(255, 248, 225, 0.5));
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     z-index: 100;
 }
@@ -76,37 +78,56 @@ body {
     width: 100%;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
+    /* FIX: Prevents snapped items from hiding under the header */
+    scroll-padding-top: var(--header-height);
 }
 
-/* --- Product Card (Mobile First) --- */
+/* --- Product Card & Ambilight Glow Effect --- */
 .product-card {
     width: calc(100% - 2rem);
-    height: calc(100vh - 80px);
-    margin: 40px 1rem;
+    /* FIX: Card height adjusted for header and margins */
+    height: calc(100vh - var(--header-height) - 40px); 
+    margin: 20px 1rem;
+    /* FIX: The first card no longer needs a special top margin due to the intro card */
     border-radius: 20px;
     overflow: hidden;
     background-color: var(--card-bg);
     position: relative;
-    scroll-snap-align: center;
+    scroll-snap-align: start; /* Snap to top, respecting scroll-padding */
     display: flex;
     justify-content: center;
     align-items: center;
-    /* The dynamic glow is applied here */
-    box-shadow: 0 10px 30px var(--shadow-color), 0 0 0px 0px var(--glow-color);
-    transition: box-shadow 0.8s ease-in-out;
+    box-shadow: 0 10px 30px var(--shadow-color);
 }
-.product-card.is-glowing {
-    box-shadow: 0 10px 30px var(--shadow-color), 0 0 50px 10px var(--glow-color);
+/* This pseudo-element creates the Ambilight glow */
+.product-card::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%; /* Glow is larger than the card */
+    height: 120%;
+    background: var(--glow-gradient);
+    filter: blur(50px);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 1s ease-in-out, background 1s ease-in-out;
+}
+.product-card.is-glowing::before {
+    opacity: 0.8; /* Fade in the glow */
 }
 .product-card-media {
     width: 100%; height: 100%;
     object-fit: cover;
     cursor: pointer;
 }
+
+/* --- Card Actions (Buttons) --- */
 .product-card-actions {
     position: absolute;
     bottom: 15px;
-    right: 15px; /* Moved slightly to the right */
+    right: 15px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -117,8 +138,7 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(0,0,0,0.05);
     border-radius: 50%;
-    width: 40px; /* 20% smaller */
-    height: 40px; /* 20% smaller */
+    width: 40px; height: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -127,17 +147,13 @@ body {
     box-shadow: 0 3px 12px rgba(0,0,0,0.1);
 }
 .action-button:active { transform: scale(0.9); }
-.action-button svg, .action-button img { width: 20px; height: 20px; transition: all 0.2s ease; }
+.action-button svg, .action-button img { width: 20px; height: 20px; }
 .action-button.like-btn svg { stroke: var(--primary-text); fill: none; }
 .action-button.like-btn.voted { background-color: var(--like-color); }
 .action-button.like-btn.voted svg { stroke: white; fill: white; transform: scale(1.1); }
 .action-button.whatsapp-btn { background-color: transparent; }
 .action-button.whatsapp-btn img { width: 40px; height: 40px; }
-
-/* The product name is now hidden from the user */
-.product-name {
-    display: none;
-}
+.product-name { display: none; } /* Name is hidden per request */
 
 /* --- Scroll Prompt & End Card --- */
 .intro-card, .end-card {
@@ -149,7 +165,6 @@ body {
     align-items: center;
     text-align: center;
     padding: 2rem;
-    color: var(--primary-text);
 }
 .scroll-prompt-animation {
     margin-top: 1.5rem;
@@ -168,11 +183,10 @@ body {
     border-radius: 50px;
     cursor: pointer;
     box-shadow: 0 5px 20px rgba(198, 40, 40, 0.4);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
 }
 #scrollToTopBtn:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(198, 40, 40, 0.5);
 }
 
 /* --- Fullscreen Modal --- */
@@ -201,13 +215,14 @@ body {
         gap: 2rem;
         max-width: 1400px;
         margin: 0 auto;
-        padding: 100px 2rem 50px 2rem;
+        padding: calc(var(--header-height) + 2rem) 2rem 50px 2rem;
         overflow-y: visible;
         scroll-snap-type: none;
     }
     .product-card {
         scroll-snap-align: none;
-        width: 100%; height: auto;
+        width: 100%; 
+        height: auto;
         aspect-ratio: 9 / 13;
         margin: 0;
         transition: transform 0.3s ease, box-shadow 0.3s ease;

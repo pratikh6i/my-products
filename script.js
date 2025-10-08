@@ -3,8 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ⭐ FINAL CONFIGURATION (FOR GITHUB & GOOGLE SHEETS) ⭐ ---
     const GITHUB_USERNAME = 'pratikh6i';
     const GITHUB_REPO = 'my-products';
-    const WHATSAPP_NUMBER = '919548172711'; // Updated phone number.
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwYyYjR4n4g7V4h8N3v8z3f7d4gY6f_5R2q9c8K3b1/exec'; // Please replace with your actual URL.
+    const WHATSAPP_NUMBER = '919548172711';
+    // ✅ URL Updated with your new link.
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzSddTDdrJdL4ywd2vGN8HYiXxwyQsg35tx0VpIEatQ5d7AqhnfEo7TcPVkR4qZjTZE/exec';
     const PRODUCTS_FOLDER = 'products';
     const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${PRODUCTS_FOLDER}`;
     // --- END OF CONFIGURATION ---
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusMessage = document.getElementById('statusMessage');
     const searchInput = document.getElementById('searchInput');
     const searchIcon = document.getElementById('searchIcon');
+    const header = document.getElementById('main-header');
     const fullscreenModal = document.getElementById('fullscreen-modal');
     const modalContent = document.getElementById('modal-content');
     const closeModalBtn = document.querySelector('.close-button');
@@ -41,12 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAndDisplayProducts() {
         try {
             const response = await fetch(GITHUB_API_URL);
-            if (!response.ok) throw new Error(`GitHub API Error: ${response.status}. Check username/repo and ensure it's public.`);
-            
+            if (!response.ok) throw new Error(`GitHub API Error: ${response.status}. Check username/repo.`);
             const files = await response.json();
-            const mediaFiles = files.filter(file =>
-                file.type === 'file' && /\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i.test(file.name)
-            );
+            const mediaFiles = files.filter(file => file.type === 'file' && /\.(jpe?g|png|gif|webp|mp4|webm|mov)$/i.test(file.name));
 
             if (!mediaFiles || mediaFiles.length === 0) {
                 displayMessage("No products found. Add media to the 'products' folder on GitHub.");
@@ -54,22 +53,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             statusMessage.style.display = 'none';
-            galleryContainer.innerHTML = ''; // Clear loader
+            galleryContainer.innerHTML = '';
 
-            // 1. Add Intro Card to prompt scrolling
+            const headerHeight = header.offsetHeight || 70;
+            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+            
             galleryContainer.appendChild(createIntroCard());
-
-            // 2. Add all product cards
-            mediaFiles.forEach(file => {
-                const productCard = createProductCard(file.name, file.download_url);
-                galleryContainer.appendChild(productCard);
-            });
-
-            // 3. Add the End Card with "Scroll to Top"
+            mediaFiles.forEach(file => galleryContainer.appendChild(createProductCard(file.name, file.download_url)));
             galleryContainer.appendChild(createEndCard());
 
             setupIntersectionObserver();
-
         } catch (error) {
             console.error('Failed to fetch products:', error);
             displayMessage(error.message);
@@ -79,25 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function createProductCard(filename, fileUrl) {
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.dataset.filename = filename; // Use 'filename' consistently
+        card.dataset.filename = filename;
 
         const productName = filename.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         card.dataset.name = productName.toLowerCase();
         
         const isVideo = /\.(mp4|webm|mov)$/i.test(filename);
+        let mediaElement = document.createElement(isVideo ? 'video' : 'img');
         
-        let mediaElement;
         if (isVideo) {
-            mediaElement = document.createElement('video');
-            mediaElement.src = fileUrl;
-            mediaElement.autoplay = true; mediaElement.loop = true;
-            mediaElement.muted = true; mediaElement.playsInline = true;
+            Object.assign(mediaElement, { src: fileUrl, autoplay: true, loop: true, muted: true, playsInline: true });
         } else {
-            mediaElement = document.createElement('img');
-            mediaElement.src = fileUrl;
-            mediaElement.alt = productName;
-            mediaElement.loading = 'lazy';
-            mediaElement.crossOrigin = "Anonymous"; // Required for Color Thief
+            Object.assign(mediaElement, { src: fileUrl, alt: productName, loading: 'lazy', crossOrigin: "Anonymous" });
             mediaElement.addEventListener('load', () => card.dataset.isImageLoaded = 'true');
         }
         mediaElement.className = 'product-card-media';
@@ -119,12 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
         mediaElement.addEventListener('click', () => openModal(fileUrl, isVideo));
         return card;
     }
-    
+
     function createActionButton(type, onClickHandler) {
         const button = document.createElement('button');
         button.className = `action-button ${type}-btn`;
         button.dataset.type = type;
-
         const icons = {
             like: `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`,
             whatsapp: `<img src="https://raw.githubusercontent.com/pratikh6i/my-products/main/products/statick-media/WhatsApp%20Messenger.webp" alt="WhatsApp">`
@@ -135,19 +120,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupIntersectionObserver() {
-        const options = { root: null, threshold: 0.6 }; // Trigger when 60% is visible
+        const options = { root: null, threshold: 0.6 };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const card = entry.target;
-                if (!card.dataset.filename) return; // Ignore intro/end cards
+                if (!card.dataset.filename) return;
                 
-                const filename = card.dataset.filename;
-
                 if (entry.isIntersecting) {
+                    const filename = card.dataset.filename;
                     if (currentVisibleProduct !== filename) {
-                        logViewDuration(); // Log duration for the previous item
+                        logViewDuration();
                         currentVisibleProduct = filename;
-                        viewStartTime = Date.now(); // Start timer for new item
+                        viewStartTime = Date.now();
                         
                         const img = card.querySelector('img');
                         if (img && card.dataset.isImageLoaded === 'true') {
@@ -159,46 +143,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }, options);
-
         document.querySelectorAll('.product-card').forEach(card => observer.observe(card));
-        
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') logViewDuration();
-        });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') logViewDuration(); });
     }
-    
+
     function handleVote(e) {
         const button = e.currentTarget;
         const card = button.closest('.product-card');
         const filename = card.dataset.filename;
-        
         const currentVote = userVotes[filename];
         let newAction = 'like';
-
         if (currentVote === 'like') {
-            newAction = 'unlike'; // Send 'unlike' when deselecting
+            newAction = 'unlike';
         }
-
         userVotes[filename] = (newAction === 'like') ? 'like' : undefined;
         localStorage.setItem('userVotes', JSON.stringify(userVotes));
-        
         updateVoteUI(card, newAction);
-
         sendDataToSheet('vote', {
             userId: userId,
-            filename: filename, // FIX: Key is 'filename'
-            action: newAction,  // FIX: Key is 'action'
+            filename: filename,
+            action: newAction,
             timestamp: new Date().toISOString()
         });
     }
 
     function logViewDuration() {
         if (viewStartTime && currentVisibleProduct) {
-            const duration = Date.now() - viewStartTime; // Duration in milliseconds
-            if (duration > 1000) { // Only log views longer than 1 second
+            const duration = Date.now() - viewStartTime;
+            if (duration > 1000) {
                 sendDataToSheet('view', {
                     userId: userId,
-                    filename: currentVisibleProduct, // FIX: Key is 'filename'
+                    filename: currentVisibleProduct,
                     duration: duration,
                     timestamp: new Date().toISOString()
                 });
@@ -209,25 +184,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function sendDataToSheet(type, payload) {
-        if (WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
+        if (!WEB_APP_URL || WEB_APP_URL.includes('PASTE_YOUR')) {
             console.warn('Analytics Disabled: Please set your WEB_APP_URL in script.js', payload);
             return;
         }
         try {
-            // Using text/plain is more reliable with Apps Script's doPost redirect behavior
             const response = await fetch(WEB_APP_URL, {
                 method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ type, ...payload }) // The Apps Script will parse this string
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, ...payload })
             });
-            console.log('Analytics data sent.');
+            const result = await response.json();
+            if (result.status === 'success') {
+                console.log('Analytics data sent successfully:', result.data);
+            } else {
+                console.error('Analytics failed to send:', result.message);
+            }
         } catch (error) {
-            console.error('Failed to send analytics:', error);
+            console.error('Network error sending analytics:', error);
         }
     }
 
-    // --- UI & UX Functions ---
     function displayMessage(message) {
         statusMessage.style.display = 'flex';
         statusMessage.innerHTML = `<p>${message}</p>`;
@@ -235,12 +212,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleSearch() {
         const searchTerm = searchInput.value.toLowerCase().trim();
+        let firstMatch = null;
         document.querySelectorAll('.product-card').forEach(card => {
             const productName = card.dataset.name || '';
-            card.style.display = productName.includes(searchTerm) ? 'flex' : 'none';
+            const isMatch = productName.includes(searchTerm);
+            card.style.display = isMatch ? 'flex' : 'none';
+            if (isMatch && !firstMatch) {
+                firstMatch = card;
+            }
         });
+        if (firstMatch && window.innerWidth < 768) {
+            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
-    
+
     function updateVoteUI(card, action) {
         const likeBtn = card.querySelector('.like-btn');
         if (action === 'like') {
@@ -271,17 +256,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentlyGlowingCard && currentlyGlowingCard !== card) {
             currentlyGlowingCard.classList.remove('is-glowing');
         }
-        
+        let gradient = 'radial-gradient(circle, #FFC107 0%, transparent 70%)';
         if (img) {
             try {
-                const [r, g, b] = colorThief.getColor(img);
-                card.style.setProperty('--glow-color', `rgba(${r}, ${g}, ${b}, 0.6)`);
+                const palette = colorThief.getPalette(img, 5);
+                if (palette && palette.length >= 2) {
+                    const color1 = `rgb(${palette[0].join(',')})`;
+                    const color2 = `rgb(${palette[1].join(',')})`;
+                    const color3 = `rgb(${palette[palette.length - 1].join(',')})`;
+                    gradient = `conic-gradient(from 90deg at 50% 50%, ${color1}, ${color2}, ${color3}, ${color1})`;
+                }
             } catch (e) {
-                card.style.setProperty('--glow-color', 'rgba(255, 193, 7, 0.4)');
+                console.warn('ColorThief could not process image.', e);
             }
-        } else { // For videos or if color thief fails
-            card.style.setProperty('--glow-color', 'rgba(255, 193, 7, 0.4)');
         }
+        card.style.setProperty('--glow-gradient', gradient);
         card.classList.add('is-glowing');
         currentlyGlowingCard = card;
     }
@@ -298,8 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `;
-        // Make the intro card snap to the bottom to hint at the content above
-        card.style.scrollSnapAlign = 'end';
         return card;
     }
 
