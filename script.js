@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const GITHUB_USERNAME = 'pratikh6i';
     const GITHUB_REPO = 'my-products';
     const WHATSAPP_NUMBER = '919548172711';
-    // ✅ URL Updated with your new link.
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzN5-9YPenfVHYGv-LFZHN23cZaN9m3l-sJPPgf-evOUu4MCALeZyPpBttSbF1MuCWI/exec';
+    // ⚠️ IMPORTANT: Paste your NEWEST deployed Web App URL here.
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyop2VzmgLhFNaBEMfgfuUxNxF9y3jB64CjathYvtzb-Le1p7ss5CKCKh2qZGqtciO6/exec';
     const PRODUCTS_FOLDER = 'products';
     const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${PRODUCTS_FOLDER}`;
     // --- END OF CONFIGURATION ---
@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Element Selectors ---
     const galleryContainer = document.getElementById('gallery-container');
     const statusMessage = document.getElementById('statusMessage');
-    const searchInput = document.getElementById('searchInput');
-    const searchIcon = document.getElementById('searchIcon');
     const header = document.getElementById('main-header');
     const fullscreenModal = document.getElementById('fullscreen-modal');
     const modalContent = document.getElementById('modal-content');
@@ -183,6 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentVisibleProduct = null;
     }
 
+    /**
+     * CRITICAL FIX: Sends data using a standard fetch request that works
+     * with the new CORS-enabled Google Apps Script.
+     */
     async function sendDataToSheet(type, payload) {
         if (!WEB_APP_URL || WEB_APP_URL.includes('PASTE_YOUR')) {
             console.warn('Analytics Disabled: Please set your WEB_APP_URL in script.js', payload);
@@ -191,39 +193,22 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(WEB_APP_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain for simplicity with Apps Script
                 body: JSON.stringify({ type, ...payload })
             });
-            const result = await response.json();
-            if (result.status === 'success') {
-                console.log('Analytics data sent successfully:', result.data);
-            } else {
-                console.error('Analytics failed to send:', result.message);
-            }
+
+            // We don't need to read the response json unless we're debugging
+            console.log('Analytics request sent.');
+
         } catch (error) {
             console.error('Network error sending analytics:', error);
         }
     }
 
+
     function displayMessage(message) {
         statusMessage.style.display = 'flex';
         statusMessage.innerHTML = `<p>${message}</p>`;
-    }
-
-    function handleSearch() {
-        const searchTerm = searchInput.value.toLowerCase().trim();
-        let firstMatch = null;
-        document.querySelectorAll('.product-card').forEach(card => {
-            const productName = card.dataset.name || '';
-            const isMatch = productName.includes(searchTerm);
-            card.style.display = isMatch ? 'flex' : 'none';
-            if (isMatch && !firstMatch) {
-                firstMatch = card;
-            }
-        });
-        if (firstMatch && window.innerWidth < 768) {
-            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
     }
 
     function updateVoteUI(card, action) {
@@ -256,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentlyGlowingCard && currentlyGlowingCard !== card) {
             currentlyGlowingCard.classList.remove('is-glowing');
         }
-        let gradient = 'radial-gradient(circle, #FFC107 0%, transparent 70%)';
+        let gradient = 'radial-gradient(circle, #F1C40F 0%, transparent 70%)';
         if (img) {
             try {
                 const palette = colorThief.getPalette(img, 5);
@@ -280,11 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'intro-card';
         card.innerHTML = `
             <div>
-                <h2>Welcome to the Collection</h2>
-                <p>Scroll up to explore the latest designs</p>
-                <div class="scroll-prompt-animation">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-                </div>
+                <h2 style="font-weight: 600; font-size: 1.8rem; margin-bottom: 0.5rem;">Welcome to the Collection</h2>
+                <p style="opacity: 0.8;">Scroll to explore the latest designs</p>
             </div>
         `;
         return card;
@@ -295,10 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'end-card';
         card.innerHTML = `
             <div>
-                <h2>You've reached the end!</h2>
-                <p>Thank you for exploring the collection.</p>
-                <br>
-                <button id="scrollToTopBtn">Scroll to Top</button>
+                <h2 style="font-weight: 600; font-size: 1.8rem; margin-bottom: 0.5rem;">You've Reached the End</h2>
+                <p style="opacity: 0.8; margin-bottom: 2rem;">Thank you for exploring the collection.</p>
+                <button id="scrollToTopBtn">Back to Top</button>
             </div>
         `;
         card.querySelector('#scrollToTopBtn').addEventListener('click', () => {
@@ -308,11 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    searchIcon.addEventListener('click', () => {
-        searchInput.classList.toggle('active');
-        searchInput.focus();
-    });
-    searchInput.addEventListener('input', handleSearch);
     closeModalBtn.addEventListener('click', closeModal);
     fullscreenModal.addEventListener('click', (e) => {
         if (e.target === fullscreenModal) closeModal();
