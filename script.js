@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const GITHUB_REPO = 'my-products';
     const WHATSAPP_NUMBER = '919548172711';
     // ⚠️ IMPORTANT: Paste your NEWEST deployed Web App URL here.
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw8XEnOVcyLQPmwpTyaVk6HI7igFhu2Kvwf48BKHS3sPI5uxXuJNw_SalTuxSPONHIh/exec';
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyI81uX-DMca5MP422AqV7LjEhnhiIpyojza4aIUEOiUEXUFAb3gmTO02WcnLg3KA/exec';
     const PRODUCTS_FOLDER = 'products';
     const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${PRODUCTS_FOLDER}`;
     // --- END OF CONFIGURATION ---
@@ -180,11 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewStartTime = null;
         currentVisibleProduct = null;
     }
-
-    /**
-     * CRITICAL FIX: Sends data using a standard fetch request that works
-     * with the new CORS-enabled Google Apps Script.
-     */
+    
     async function sendDataToSheet(type, payload) {
         if (!WEB_APP_URL || WEB_APP_URL.includes('PASTE_YOUR')) {
             console.warn('Analytics Disabled: Please set your WEB_APP_URL in script.js', payload);
@@ -193,18 +189,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(WEB_APP_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain for simplicity with Apps Script
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ type, ...payload })
             });
-
-            // We don't need to read the response json unless we're debugging
-            console.log('Analytics request sent.');
-
         } catch (error) {
             console.error('Network error sending analytics:', error);
         }
     }
-
 
     function displayMessage(message) {
         statusMessage.style.display = 'flex';

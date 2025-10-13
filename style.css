@@ -223,7 +223,7 @@ body {
         gap: 2.5rem;
         max-width: 1400px;
         margin: 0 auto;
-        padding: calc(var(--header-height) + 2rem) 2.5rem 50px 2.5rem;
+        padding: calc(var(--header-height) + 2rem) 2.5rem 0 2.5rem; /* Remove bottom padding */
         overflow-y: visible;
         scroll-snap-type: none;
     }
@@ -234,7 +234,4 @@ body {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .intro-card, .end-card { display: none; }
-    .footer {
-        /* The footer is already styled correctly for desktop */
-    }
 }
